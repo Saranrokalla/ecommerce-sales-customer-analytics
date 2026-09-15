@@ -1,0 +1,71 @@
+-- Power BI DAX Measures
+-- Table name: ecommerce_sales_data
+
+Total Revenue =
+CALCULATE(
+    SUM(ecommerce_sales_data[revenue]),
+    ecommerce_sales_data[order_status] = "Completed"
+)
+
+Completed Orders =
+CALCULATE(
+    COUNTROWS(ecommerce_sales_data),
+    ecommerce_sales_data[order_status] = "Completed"
+)
+
+Average Order Value =
+DIVIDE([Total Revenue], [Completed Orders], 0)
+
+Returned Orders =
+CALCULATE(
+    COUNTROWS(ecommerce_sales_data),
+    ecommerce_sales_data[returned_flag] = 1
+)
+
+Qualifying Orders =
+CALCULATE(
+    COUNTROWS(ecommerce_sales_data),
+    ecommerce_sales_data[order_status] <> "Cancelled"
+)
+
+Return Rate =
+DIVIDE([Returned Orders], [Qualifying Orders], 0)
+
+Unique Customers =
+CALCULATE(
+    DISTINCTCOUNT(ecommerce_sales_data[customer_id]),
+    ecommerce_sales_data[order_status] = "Completed"
+)
+
+Units Sold =
+CALCULATE(
+    SUM(ecommerce_sales_data[quantity]),
+    ecommerce_sales_data[order_status] = "Completed"
+)
+
+Revenue per Customer =
+DIVIDE([Total Revenue], [Unique Customers], 0)
+
+Previous Month Revenue =
+CALCULATE(
+    [Total Revenue],
+    DATEADD('Calendar'[Date], -1, MONTH)
+)
+
+MoM Revenue % =
+DIVIDE(
+    [Total Revenue] - [Previous Month Revenue],
+    [Previous Month Revenue],
+    0
+)
+
+-- Customer Type calculated column
+Customer Type =
+VAR OrderCount =
+    CALCULATE(
+        COUNTROWS(ecommerce_sales_data),
+        ALLEXCEPT(ecommerce_sales_data, ecommerce_sales_data[customer_id]),
+        ecommerce_sales_data[order_status] = "Completed"
+    )
+RETURN
+IF(OrderCount > 1, "Repeat", "New")
